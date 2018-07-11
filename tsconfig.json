@@ -32,8 +32,8 @@
         "build", 
         "node_modules",
         "jest.config.js",
-        "App.js"
-        
+        "App.js",
+        "jest.config.js"
     ],
     "compileOnSave": false
 }

@@ -1,23 +1,37 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { createStackNavigator, NavigationScreenProps } from 'react-navigation';
+//import { Font } from 'expo';
+import { defaultStyles } from './styles';
+import { Home } from './Home/Home';
 
-export default class App extends React.Component {
-  render() {
-    return (
-      <View style={styles.container}>
-        <Text>Open up App.js to start working on your app!!!!!!</Text>
-        <Text>Changes you make will automatically reload.</Text>
-        <Text>Shake your phone to open the developer menu.</Text>
-      </View>
-    );
+export class App extends React.PureComponent<NavigationScreenProps> {
+
+  async componentDidMount() {
+    // await Font.loadAsync({
+    //   'johnston': require('./assets/fonts/P22\ Johnston\ Underground.ttf'),
+    // });
+    this.props.navigation.replace('Home')
+  }
+
+  render(): JSX.Element {
+    return null;
   }
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+export default createStackNavigator({
+  App: App,
+  Home: Home,
+}, {
+    initialRouteName: 'App',
+    navigationOptions: {
+      headerStyle: {
+        backgroundColor: defaultStyles.brandColor,
+      },
+      headerTintColor: '#fff',
+      headerTitleStyle: {
+        fontWeight: 'bold',
+        fontFamily: defaultStyles.fontFamily,
+      },
+    },
+  }
+);
