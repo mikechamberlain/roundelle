@@ -2,8 +2,8 @@ import React from 'react';
 import { View, StyleSheet, TextInput, TextInputProperties, TouchableHighlight } from 'react-native';
 import { defaultStyles, RoundelInfo } from '../styles';
 
-const RING_SCALING_FACTOR = 0.85;
-const HOLE_SCALING_FACTOR = 0.56;
+const RING_SCALING_FACTOR = 0.82;
+const HOLE_SCALING_FACTOR = 0.54;
 const BAR_SCALING_FACTOR = 0.17;
 const FONT_SCALING_FACTOR = 0.115;
 
@@ -14,23 +14,14 @@ export interface RoundelProps extends RoundelInfo {
   onChangeText?: (text: string) => void;
 }
 
-interface RoundelState extends RoundelInfo {
-  fontSize: number;
-}
-
-export class Roundel extends React.PureComponent<RoundelProps, RoundelState> {
+export class Roundel extends React.PureComponent<RoundelProps, RoundelInfo> {
 
   constructor(props: RoundelProps) {
     super(props);
-    this.state = {
-      ...props,
-      fontSize: 1,
-    } as RoundelState;
+    this.state = this.props as RoundelInfo;
   }
 
   private onChangeText = (text: string) => {
-    this.setState(() => { fontSize: 12 });
-
     if (this.props.onChangeText) {
       this.props.onChangeText(text);
     }
@@ -54,6 +45,7 @@ export class Roundel extends React.PureComponent<RoundelProps, RoundelState> {
         alignItems: 'center',
         width: this.props.size,
         height: this.props.size,
+        backgroundColor: 'white',
       },
       ring: {
         borderRadius: 999999,
@@ -73,13 +65,13 @@ export class Roundel extends React.PureComponent<RoundelProps, RoundelState> {
       bar: {
         position: 'absolute',
         height: this.props.size * BAR_SCALING_FACTOR,
-        width: '100%',
+        width: '98%',
         backgroundColor: this.props.barColor,
       },
       text: {
         position: 'absolute',
         color: this.props.textColor,
-        fontSize: this.state.fontSize,// this.props.size * FONT_SCALING_FACTOR,
+        fontSize: this.props.size * FONT_SCALING_FACTOR,
         width: '90%',
         fontFamily: defaultStyles.fontFamily,
       }
@@ -101,8 +93,6 @@ export class Roundel extends React.PureComponent<RoundelProps, RoundelState> {
       ...textInputProps,
       textAlign: 'center',
     };
-
-    console.log('rendering roundel');
 
     return (
       <TouchableHighlight 

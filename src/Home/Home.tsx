@@ -1,19 +1,24 @@
 import React from 'react';
-import { View, Dimensions, StatusBar, StyleSheet, ScrollView } from 'react-native';
+import { View, Dimensions, StatusBar, StyleSheet, ScrollView, Button } from 'react-native';
 import { Roundel, RoundelProps } from '../Roundel/Roundel';
 import { roundels, RoundelInfo, defaultStyles } from '../styles';
+import ActionSheet from 'react-native-actionsheet';
+import { exportImage, ExportAction } from './Export';
+import { NavigationScreenProps, NavigationParams } from 'react-navigation';
 
 interface HomeState {
   roundel: RoundelInfo;
 }
 
-export class Home extends React.PureComponent<{}, HomeState> {
+export class Home extends React.PureComponent<NavigationScreenProps, HomeState> {
 
   screenWidth: number;
   editorSize: number;
   themeItemSize: number;
-  
-  constructor(props: {}) {
+  editorView: Roundel;
+  exportActionSheet: ActionSheet;
+
+  constructor(props: NavigationScreenProps) {
     super(props);
 
     this.state = {
@@ -24,16 +29,28 @@ export class Home extends React.PureComponent<{}, HomeState> {
     };
 
     const screenWidth = Dimensions.get('screen').width;
-    this.editorSize = screenWidth * 0.95;
+    this.editorSize = screenWidth;
     this.themeItemSize = screenWidth * 0.18;
   }
 
-  static navigationOptions = {
+  componentDidMount() {
+    this.props.navigation.setParams({
+      showExportActionSheet: () => this.exportActionSheet.show() 
+    });
+  }
+
+  static navigationOptions = (navigation: NavigationParams) => ({
     title: 'Roundel',
-  };
+    headerRight: (
+      <Button
+        onPress={() => navigation.navigation.getParam('showExportActionSheet')()}
+        title="Share"
+        color="white"
+      />
+    ),
+  });
 
   private onRoundelPress = (roundel: RoundelInfo) => {
-    console.log(roundel);
     this.setState(() => ({
       roundel: {
         ...roundel,
@@ -43,7 +60,6 @@ export class Home extends React.PureComponent<{}, HomeState> {
   }
 
   private onChangeText = (text: string) => {
-    console.log('text changed to ' + text + ' on home');
     this.setState(prev => ({
       roundel: {
         ...prev.roundel,
@@ -53,10 +69,6 @@ export class Home extends React.PureComponent<{}, HomeState> {
   }
 
   render() {
-
-    console.log('rendering home')
-    console.log(this.state);
-
     const editorProps: RoundelProps = {
       ...this.state.roundel,
       editable: true,
@@ -72,18 +84,24 @@ export class Home extends React.PureComponent<{}, HomeState> {
       text: this.state.roundel.text,
       onPress: this.onRoundelPress,
     }));
-
+    
     return (
       <View style={styles.container}>
-        <StatusBar barStyle="light-content" translucent />
+        <StatusBar barStyle="light-content" />
         <View style={styles.roundel}>
-          <Roundel {...editorProps} />
+          <Roundel {...editorProps} ref={ref => { this.editorView = ref;} } />
         </View>
         <ScrollView style={styles.themes}>
           <View style={styles.themeItems}>
             {themeProps.map((p, i) => <Roundel key={i} {...p} />)}
           </View>
-        </ScrollView>>
+        </ScrollView>
+        <ActionSheet
+          ref={(ref:any) => this.exportActionSheet = ref}
+          options={['Save to photos', 'Share', 'Cancel']}
+          cancelButtonIndex={2}
+          onPress={(action: ExportAction) => { exportImage(action, this.editorView) }}
+        />
       </View>
     );
   }
@@ -98,14 +116,14 @@ const styles = StyleSheet.create({
   },
   roundel: {
     backgroundColor: 'white',
-    borderBottomColor: defaultStyles.brandColor,
-    borderBottomWidth: 0.5,
   },
   themes: {
     paddingTop: 10,
     flexGrow: 1,
     backgroundColor: 'white',
     width: '100%',
+    borderColor: defaultStyles.brandColor,
+    borderTopWidth: 0.5,
   },
   themeItems: {
     flexDirection: 'row',
