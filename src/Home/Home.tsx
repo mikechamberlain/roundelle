@@ -7,8 +7,13 @@ import { exportImage, ExportAction } from './Export';
 import { NavigationScreenProps, NavigationParams } from 'react-navigation';
 import { Ionicons } from '@expo/vector-icons';
 
+const DEFAULT_TEXT_SIZE = 1;
+const MAX_TEXT_LENGTH = 10;
+const TEXT_SCALING_FACTOR = 0.9545;
+
 interface HomeState {
   roundel: RoundelInfo;
+  editing: boolean;
 }
 
 export class Home extends React.PureComponent<NavigationScreenProps, HomeState> {
@@ -26,7 +31,9 @@ export class Home extends React.PureComponent<NavigationScreenProps, HomeState> 
       roundel: {
         ...roundels[0],
         text: '',
-      }
+        textSize: DEFAULT_TEXT_SIZE,
+      },
+      editing: true,
     };
 
     const screenWidth = Dimensions.get('screen').width;
@@ -36,7 +43,7 @@ export class Home extends React.PureComponent<NavigationScreenProps, HomeState> 
 
   componentDidMount() {
     this.props.navigation.setParams({
-      showExportActionSheet: () => this.exportActionSheet.show() 
+      export: this.export
     });
   }
 
@@ -46,9 +53,9 @@ export class Home extends React.PureComponent<NavigationScreenProps, HomeState> 
       <Ionicons
         style={styles.shareButton}
         name="ios-share-outline" 
-        size={32} 
+        size={30} 
         color="white" 
-        onPress={() => navigation.navigation.getParam('showExportActionSheet')()}/>
+        onPress={() => navigation.navigation.getParam('export')()}/>
     ),
   });
 
@@ -61,21 +68,35 @@ export class Home extends React.PureComponent<NavigationScreenProps, HomeState> 
     }));
   }
 
-  private onChangeText = (text: string) => {
+  private recalculateTextSize = (text: string) => {
+    const textSize = Math.min(
+      DEFAULT_TEXT_SIZE, 
+      DEFAULT_TEXT_SIZE * Math.pow(TEXT_SCALING_FACTOR, (text.length - MAX_TEXT_LENGTH)));
     this.setState(prev => ({
       roundel: {
         ...prev.roundel,
         text,
+        textSize,
       }
     }));
+  }
+
+  private export = () => {
+    this.setState(() => {editing: false});
+    setTimeout(() => {
+      this.recalculateTextSize(this.state.roundel.text);
+      this.exportActionSheet.show();
+    },500);
   }
 
   render() {
     const editorProps: RoundelProps = {
       ...this.state.roundel,
       editable: true,
+      editing: this.state.editing,
       size: this.editorSize,
-      onChangeText: this.onChangeText,
+      textSize: this.state.roundel.textSize,
+      onChangeText: this.recalculateTextSize,
       onPress: undefined,
     };
 
@@ -84,6 +105,7 @@ export class Home extends React.PureComponent<NavigationScreenProps, HomeState> 
       editable: false,
       size: this.themeItemSize,
       text: this.state.roundel.text,
+      textSize: this.state.roundel.textSize,
       onPress: this.onRoundelPress,
     }));
     

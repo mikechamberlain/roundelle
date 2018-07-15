@@ -1,37 +1,46 @@
 import React from 'react';
-import { View, StyleSheet, TextInput, TextInputProperties, TouchableHighlight } from 'react-native';
+import { View, StyleSheet, TextInput, TextInputProperties, TouchableHighlight, NativeSyntheticEvent, TextInputEndEditingEventData } from 'react-native';
 import { defaultStyles, RoundelInfo } from '../styles';
 
 const RING_SCALING_FACTOR = 0.82;
 const HOLE_SCALING_FACTOR = 0.54;
 const BAR_SCALING_FACTOR = 0.17;
-const FONT_SCALING_FACTOR = 0.115;
+const FONT_SCALING_FACTOR = 0.124;
 
 export interface RoundelProps extends RoundelInfo {
   size: number;
   editable?: boolean;
+  editing?: boolean;
   onPress?: (roundel: RoundelInfo) => void;
   onChangeText?: (text: string) => void;
 }
 
 export class Roundel extends React.PureComponent<RoundelProps, RoundelInfo> {
 
+  textInput: TextInput;
+
   constructor(props: RoundelProps) {
     super(props);
-    this.state = this.props as RoundelInfo;
+    this.state = {
+      ...this.props,
+      textSize: this.props.textSize
+    } as RoundelInfo;
   }
 
-  private onChangeText = (text: string) => {
+  componentDidMount() {
     if (this.props.onChangeText) {
-      this.props.onChangeText(text);
+      this.props.onChangeText(this.state.text);
     }
-    if (!this.props.editable) return;
-    this.setState(() => ({
-      text: text,
-    }));
   }
 
-  private onPress = () => {
+  private onEndEditing = (e: NativeSyntheticEvent<TextInputEndEditingEventData>) => {
+    if (this.props.onChangeText) {
+      this.props.onChangeText(e.nativeEvent.text);
+    }
+  }
+
+  onPress = () => {
+    console.log('prts')
     if (this.props.onPress) {
       this.props.onPress(this.state);
     }
@@ -59,7 +68,6 @@ export class Roundel extends React.PureComponent<RoundelProps, RoundelInfo> {
         borderRadius: 999999,
         width: this.props.size * HOLE_SCALING_FACTOR,
         height: this.props.size * HOLE_SCALING_FACTOR,
-        //margin: 5,
         backgroundColor: 'white'
       },
       bar: {
@@ -71,9 +79,10 @@ export class Roundel extends React.PureComponent<RoundelProps, RoundelInfo> {
       text: {
         position: 'absolute',
         color: this.props.textColor,
-        fontSize: this.props.size * FONT_SCALING_FACTOR,
-        width: '90%',
+        fontSize: this.props.size * FONT_SCALING_FACTOR * this.props.textSize,
+        width: '97%',
         fontFamily: defaultStyles.fontFamily,
+        height: this.props.size * BAR_SCALING_FACTOR,
       }
     });
 
@@ -84,7 +93,7 @@ export class Roundel extends React.PureComponent<RoundelProps, RoundelInfo> {
       autoCapitalize: 'characters',
       placeholderTextColor: 'white',
       autoCorrect: false,
-      autoFocus: this.props.editable,
+      autoFocus: this.props.editing,
       returnKeyType: 'done',
       allowFontScaling: true,
     };
@@ -93,8 +102,9 @@ export class Roundel extends React.PureComponent<RoundelProps, RoundelInfo> {
       ...textInputProps,
       textAlign: 'center',
     };
-
+    console.log('render');
     return (
+      
       <TouchableHighlight 
         onPress={this.onPress}
         activeOpacity={this.props.editable ? 1 : defaultStyles.touchableHighlight.activeOpacity}
@@ -104,7 +114,11 @@ export class Roundel extends React.PureComponent<RoundelProps, RoundelInfo> {
             <View style={styles.hole} />
           </View>
           <View style={styles.bar} />
-          <TextInput {...props} onChangeText={this.onChangeText} />
+          <TextInput 
+            ref={ref => this.textInput = ref}
+            onEndEditing={this.onEndEditing}
+            {...props}  
+          />
         </View>
       </TouchableHighlight>
     );

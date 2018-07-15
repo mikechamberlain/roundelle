@@ -37,7 +37,7 @@ export const exportImage = async (action: ExportAction, view: any) => {
           'Please make sure this app has permission to access your photos.',
           [
             { text: 'Cancel', style: 'destructive' },
-            { text: 'Go to settings', style: 'default', onPress:() => { Linking.openURL('app-settings:'); } } 
+            { text: 'Open settings', style: 'default', onPress:() => { Linking.openURL('app-settings:'); } } 
           ]
         )
       })

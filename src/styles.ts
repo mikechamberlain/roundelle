@@ -13,6 +13,7 @@ export interface RoundelInfo {
     ringColor: string;
     barColor: string;
     textColor: string;
+    textSize?: number;
 }
 
 export const roundels: RoundelInfo[] = [
