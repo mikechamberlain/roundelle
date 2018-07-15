@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Dimensions, StatusBar, StyleSheet, ScrollView } from 'react-native';
+import { View, Dimensions, StatusBar, StyleSheet, ScrollView, Keyboard } from 'react-native';
 import { Roundel, RoundelProps } from '../Roundel/Roundel';
 import { roundels, RoundelInfo, defaultStyles } from '../styles';
 import ActionSheet from 'react-native-actionsheet';
@@ -9,11 +9,13 @@ import { Ionicons } from '@expo/vector-icons';
 
 const DEFAULT_TEXT_SIZE = 1;
 const MAX_TEXT_LENGTH = 10;
-const TEXT_SCALING_FACTOR = 0.9545;
+const TEXT_SCALING_FACTOR = 0.94 // for every character over the max, we reduce the text size by this factor;
+const THEME_ITEM_SCALING_FACTOR = 0.18;
 
 interface HomeState {
   roundel: RoundelInfo;
   editing: boolean;
+  text: string;
 }
 
 export class Home extends React.PureComponent<NavigationScreenProps, HomeState> {
@@ -30,15 +32,15 @@ export class Home extends React.PureComponent<NavigationScreenProps, HomeState> 
     this.state = {
       roundel: {
         ...roundels[0],
-        text: '',
         textSize: DEFAULT_TEXT_SIZE,
       },
       editing: true,
+      text: '',
     };
 
     const screenWidth = Dimensions.get('screen').width;
     this.editorSize = screenWidth;
-    this.themeItemSize = screenWidth * 0.18;
+    this.themeItemSize = screenWidth * THEME_ITEM_SCALING_FACTOR;
   }
 
   componentDidMount() {
@@ -69,25 +71,36 @@ export class Home extends React.PureComponent<NavigationScreenProps, HomeState> 
     }));
   }
 
-  private recalculateTextSize = (text: string) => {
-    const textSize = Math.min(
+  private calcTextSize = (text: string): number => {
+    return Math.min(
       DEFAULT_TEXT_SIZE, 
       DEFAULT_TEXT_SIZE * Math.pow(TEXT_SCALING_FACTOR, (text.length - MAX_TEXT_LENGTH)));
+    }
+
+  private onChangeText = (text: string) => {
     this.setState(prev => ({
       roundel: {
         ...prev.roundel,
-        text,
-        textSize,
-      }
+        textSize: this.calcTextSize(text),
+      },
+      text: text,
     }));
   }
 
   private export = () => {
-    this.setState(() => {editing: false});
-    setTimeout(() => {
-      this.recalculateTextSize(this.state.roundel.text);
-      this.exportActionSheet.show();
-    },500);
+    Keyboard.dismiss();
+    console.log('ecpo')
+    // this.setState(() => ({
+    //   editing: false,
+    // }));
+    this.setState(prev => ({
+      roundel: {
+        ...prev.roundel,
+        textSize: this.calcTextSize(prev.roundel.text),
+      }
+    }));
+    this.exportActionSheet.show();
+
   }
 
   render() {
@@ -97,15 +110,16 @@ export class Home extends React.PureComponent<NavigationScreenProps, HomeState> 
       editing: this.state.editing,
       size: this.editorSize,
       textSize: this.state.roundel.textSize,
-      onChangeText: this.recalculateTextSize,
+      onChangeText: this.onChangeText,
       onPress: undefined,
+      text: this.state.text,
     };
 
     const themeProps: RoundelProps[] = roundels.map(roundel => ({
       ...roundel,
       editable: false,
       size: this.themeItemSize,
-      text: this.state.roundel.text,
+      text: this.state.text,
       textSize: this.state.roundel.textSize,
       onPress: this.onRoundelPress,
     }));

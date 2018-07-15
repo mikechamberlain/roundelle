@@ -80,7 +80,7 @@ export class Roundel extends React.PureComponent<RoundelProps, RoundelInfo> {
         position: 'absolute',
         color: this.props.textColor,
         fontSize: this.props.size * FONT_SCALING_FACTOR * this.props.textSize,
-        width: '97%',
+        width: '95%',
         fontFamily: defaultStyles.fontFamily,
         height: this.props.size * BAR_SCALING_FACTOR,
       }
