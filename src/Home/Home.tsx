@@ -1,10 +1,11 @@
 import React from 'react';
-import { View, Dimensions, StatusBar, StyleSheet, ScrollView, Button } from 'react-native';
+import { View, Dimensions, StatusBar, StyleSheet, ScrollView } from 'react-native';
 import { Roundel, RoundelProps } from '../Roundel/Roundel';
 import { roundels, RoundelInfo, defaultStyles } from '../styles';
 import ActionSheet from 'react-native-actionsheet';
 import { exportImage, ExportAction } from './Export';
 import { NavigationScreenProps, NavigationParams } from 'react-navigation';
+import { Ionicons } from '@expo/vector-icons';
 
 interface HomeState {
   roundel: RoundelInfo;
@@ -42,11 +43,12 @@ export class Home extends React.PureComponent<NavigationScreenProps, HomeState> 
   static navigationOptions = (navigation: NavigationParams) => ({
     title: 'Roundel',
     headerRight: (
-      <Button
-        onPress={() => navigation.navigation.getParam('showExportActionSheet')()}
-        title="Share"
-        color="white"
-      />
+      <Ionicons
+        style={styles.shareButton}
+        name="ios-share-outline" 
+        size={32} 
+        color="white" 
+        onPress={() => navigation.navigation.getParam('showExportActionSheet')()}/>
     ),
   });
 
@@ -91,6 +93,7 @@ export class Home extends React.PureComponent<NavigationScreenProps, HomeState> 
         <View style={styles.roundel}>
           <Roundel {...editorProps} ref={ref => { this.editorView = ref;} } />
         </View>
+        <View style={styles.border} />
         <ScrollView style={styles.themes}>
           <View style={styles.themeItems}>
             {themeProps.map((p, i) => <Roundel key={i} {...p} />)}
@@ -117,17 +120,22 @@ const styles = StyleSheet.create({
   roundel: {
     backgroundColor: 'white',
   },
+  border: {
+    height: 1,
+    width: '100%',
+    backgroundColor: defaultStyles.brandColor,
+  },
   themes: {
-    paddingTop: 10,
     flexGrow: 1,
     backgroundColor: 'white',
     width: '100%',
-    borderColor: defaultStyles.brandColor,
-    borderTopWidth: 0.5,
   },
   themeItems: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-evenly',
+  },
+  shareButton: {
+    paddingRight: 10
   }
 });
