@@ -6,16 +6,13 @@ export enum ExportAction {
   Share = 1,
 }
 
-export const exportImage = async (action: ExportAction, view: any) => {
+export const exportImage = async (action: ExportAction, view: any, width: number, height: number) => {
 
-  const targetPixelCount = 1080;
   const pixelRatio = PixelRatio.get();
-  const pixels = targetPixelCount / pixelRatio;
-
   const image = 'data:image/png;base64,' + await Expo.takeSnapshotAsync(view, {
     result: 'base64',
-    height: pixels,
-    width: pixels,
+    height: width / pixelRatio,
+    width: height / pixelRatio,
     quality: 1,
     format: 'png',
   });

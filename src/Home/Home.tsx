@@ -1,16 +1,18 @@
 import React from 'react';
-import { View, Dimensions, StatusBar, StyleSheet, ScrollView, Keyboard } from 'react-native';
+import { View, Dimensions, StatusBar, StyleSheet, ScrollView, TouchableHighlight, Text } from 'react-native';
 import { Roundel, RoundelProps } from '../Roundel/Roundel';
 import { roundels, RoundelInfo, defaultStyles } from '../styles';
 import ActionSheet from 'react-native-actionsheet';
 import { exportImage, ExportAction } from './Export';
-import { NavigationScreenProps, NavigationParams } from 'react-navigation';
+import { NavigationScreenProps } from 'react-navigation';
 import { Ionicons } from '@expo/vector-icons';
 
 const DEFAULT_TEXT_SIZE = 1;
 const MAX_TEXT_LENGTH = 10;
-const TEXT_SCALING_FACTOR = 0.94 // for every character over the max, we reduce the text size by this factor;
-const THEME_ITEM_SCALING_FACTOR = 0.18;
+const TEXT_SCALING_FACTOR = 0.94 // for every character over the max, we reduce the text size by this factor to try to fit it inside the bar
+const THEME_ITEM_SCALING_FACTOR = 0.23;
+const ROUNDEL_ASPECT_RATIO = 0.9
+const EXPORT_WIDTH = 1080;
 
 interface HomeState {
   roundel: RoundelInfo;
@@ -20,9 +22,9 @@ interface HomeState {
 
 export class Home extends React.PureComponent<NavigationScreenProps, HomeState> {
 
-  screenWidth: number;
-  editorSize: number;
-  themeItemSize: number;
+  screenWidth = Dimensions.get('screen').width
+  editorSize = this.screenWidth;
+  themeItemSize = this.screenWidth * THEME_ITEM_SCALING_FACTOR;
   editorView: Roundel;
   exportActionSheet: ActionSheet;
 
@@ -37,28 +39,35 @@ export class Home extends React.PureComponent<NavigationScreenProps, HomeState> 
       editing: true,
       text: '',
     };
-
-    const screenWidth = Dimensions.get('screen').width;
-    this.editorSize = screenWidth;
-    this.themeItemSize = screenWidth * THEME_ITEM_SCALING_FACTOR;
   }
 
   componentDidMount() {
     this.props.navigation.setParams({
-      export: this.export
+      _this: this,
     });
   }
 
-  static navigationOptions = (navigation: NavigationParams) => ({
+  static navigationOptions = () => ({
     title: 'Roundel',
-    headerRight: (
-      <Ionicons
-        style={styles.shareButton}
-        name="ios-share-outline" 
-        size={30} 
-        color="white" 
-        onPress={() => navigation.navigation.getParam('export')()}/>
-    ),
+    // headerRight: (
+    //   <Ionicons
+    //     style={styles.shareButton}
+    //     name="ios-share-outline" 
+    //     size={30} 
+    //     color="white" 
+    //     onPress={() => {
+    //       const _this: any = props.navigation.getParam('_this');
+    //       _this.setState((prev: HomeState) => ({
+    //           editing: false,
+    //           roundel: {
+    //             ...prev.roundel,
+    //             textSize: _this.calcTextSize(prev.roundel.text),
+    //           }
+    //       }));
+    //       _this.exportActionSheet.show();
+    //     }}
+    //   />
+    // )
   });
 
   private onRoundelPress = (roundel: RoundelInfo) => {
@@ -87,20 +96,8 @@ export class Home extends React.PureComponent<NavigationScreenProps, HomeState> 
     }));
   }
 
-  private export = () => {
-    Keyboard.dismiss();
-    console.log('ecpo')
-    // this.setState(() => ({
-    //   editing: false,
-    // }));
-    this.setState(prev => ({
-      roundel: {
-        ...prev.roundel,
-        textSize: this.calcTextSize(prev.roundel.text),
-      }
-    }));
-    this.exportActionSheet.show();
-
+  private doExport = (action: ExportAction) => {
+     exportImage(action, this.editorView, EXPORT_WIDTH, EXPORT_WIDTH * 1 / ROUNDEL_ASPECT_RATIO);
   }
 
   render() {
@@ -108,7 +105,8 @@ export class Home extends React.PureComponent<NavigationScreenProps, HomeState> 
       ...this.state.roundel,
       editable: true,
       editing: this.state.editing,
-      size: this.editorSize,
+      width: this.editorSize,
+      height: this.editorSize * ROUNDEL_ASPECT_RATIO,
       textSize: this.state.roundel.textSize,
       onChangeText: this.onChangeText,
       onPress: undefined,
@@ -118,7 +116,8 @@ export class Home extends React.PureComponent<NavigationScreenProps, HomeState> 
     const themeProps: RoundelProps[] = roundels.map(roundel => ({
       ...roundel,
       editable: false,
-      size: this.themeItemSize,
+      width: this.themeItemSize,
+      height: this.themeItemSize * ROUNDEL_ASPECT_RATIO,
       text: this.state.text,
       textSize: this.state.roundel.textSize,
       onPress: this.onRoundelPress,
@@ -136,11 +135,29 @@ export class Home extends React.PureComponent<NavigationScreenProps, HomeState> 
             {themeProps.map((p, i) => <Roundel key={i} {...p} />)}
           </View>
         </ScrollView>
+        <View style={styles.exportButtonContainer}>
+          <TouchableHighlight
+            style={styles.exportButton}
+            onPress={() => this.exportActionSheet.show()}
+            activeOpacity={defaultStyles.touchableHighlight.activeOpacity}
+            underlayColor={defaultStyles.touchableHighlight.underlayColor}
+          >
+          <View style={styles.exportButton}>
+            <Ionicons
+              style={styles.shareButton}
+              name="ios-share-outline" 
+              size={30} 
+              color="white" 
+            />
+            <Text style={styles.exportButtonText}>EXPORT</Text>
+            </View>
+          </TouchableHighlight>
+        </View>
         <ActionSheet
           ref={(ref:any) => this.exportActionSheet = ref}
           options={['Save to photos', 'Share', 'Cancel']}
           cancelButtonIndex={2}
-          onPress={(action: ExportAction) => { exportImage(action, this.editorView) }}
+          onPress={this.doExport}
         />
       </View>
     );
@@ -174,5 +191,22 @@ const styles = StyleSheet.create({
   },
   shareButton: {
     paddingRight: 10
+  },
+  exportButtonContainer: {
+    height: 45,
+    width: '100%',
+  },
+  exportButton: {
+    backgroundColor: defaultStyles.brandColor,
+    height: '100%',
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+  },
+  exportButtonText: {
+    fontFamily: defaultStyles.fontFamily,
+    color: 'white',
+    fontSize: 20,
   }
 });
