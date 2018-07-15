@@ -60,10 +60,11 @@ export class Home extends React.PureComponent<NavigationScreenProps, HomeState> 
   });
 
   private onRoundelPress = (roundel: RoundelInfo) => {
-    this.setState(() => ({
+    this.setState(prev => ({
       roundel: {
         ...roundel,
-        text: this.state.roundel.text,
+        text: prev.roundel.text,
+        textSize: prev.roundel.textSize,
       }
     }));
   }
