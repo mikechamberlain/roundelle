@@ -4,6 +4,7 @@ import { PixelRatio, Share, Alert, CameraRoll } from 'react-native';
 export enum ExportAction {
   Save = 0,
   Share = 1,
+  Cancel = 2,
 }
 
 export const exportImage = async (action: ExportAction, view: any, width: number, height: number) => {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, TextInput, TextInputProperties, TouchableHighlight, NativeSyntheticEvent, TextInputEndEditingEventData, Keyboard, Text } from 'react-native';
+import { View, StyleSheet, TextInput, TextInputProperties, TouchableHighlight, NativeSyntheticEvent, TextInputEndEditingEventData, Text } from 'react-native';
 import { defaultStyles, RoundelInfo } from '../styles';
 
 const RING_SCALING_FACTOR = 0.82;
@@ -10,13 +10,18 @@ const FONT_SCALING_FACTOR = 0.124;
 export interface RoundelProps extends RoundelInfo {
   width: number;
   height: number;
-  editable?: boolean;
   editing?: boolean;
+  editable?: boolean;
   onPress?: (roundel: RoundelInfo) => void;
-  onChangeText?: (text: string) => void;
+  onBeginEditing?: () => void;
+  onEndEditing?: (text: string) => void;
 }
 
-export class Roundel extends React.PureComponent<RoundelProps, RoundelInfo> {
+interface RoundelState extends RoundelInfo {
+  editing: boolean;
+}
+
+export class Roundel extends React.PureComponent<RoundelProps, RoundelState> {
 
   textInput: TextInput;
 
@@ -24,26 +29,31 @@ export class Roundel extends React.PureComponent<RoundelProps, RoundelInfo> {
     super(props);
     this.state = {
       ...this.props,
-      textSize: this.props.textSize
-    } as RoundelInfo;
+      textSize: this.props.textSize,
+      editing: this.props.editing,
+    } as RoundelState;
   }
 
-  componentWillReceiveProps(props: RoundelProps) {
-    console.log('will receive');
-    if (!props.editing) {
-      Keyboard.dismiss();
+  componentDidUpdate() {
+    if (!this.props.editing && this.textInput) {
+      this.setState(() => ({editing: false}));
+      this.textInput.blur();
     }
   }
 
-  componentDidMount() {
-    if (this.props.onChangeText) {
-      this.props.onChangeText(this.state.text);
+  private onBeginEditing = () => {
+    console.log('begin');
+    this.setState(() => ({editing: true}));
+    if (this.props.onBeginEditing) {
+      this.props.onBeginEditing();
     }
   }
 
   private onEndEditing = (e: NativeSyntheticEvent<TextInputEndEditingEventData>) => {
-    if (this.props.onChangeText) {
-      this.props.onChangeText(e.nativeEvent.text);
+    console.log('end');
+    this.setState(() => ({editing: false}));
+    if (this.props.onEndEditing) {
+      this.props.onEndEditing(e.nativeEvent.text);
     }
   }
 
@@ -96,9 +106,11 @@ export class Roundel extends React.PureComponent<RoundelProps, RoundelInfo> {
       },
       text: {
         position: 'absolute',
+        width: '95%', 
         color: this.props.textColor,
         fontSize: this.props.width * FONT_SCALING_FACTOR * this.props.textSize,
         fontFamily: defaultStyles.fontFamily,
+        textAlign: 'center',
       }
     });
 
@@ -109,9 +121,10 @@ export class Roundel extends React.PureComponent<RoundelProps, RoundelInfo> {
       autoCapitalize: 'characters',
       placeholderTextColor: 'white',
       autoCorrect: false,
-      autoFocus: this.props.editing,
+      autoFocus: this.state.editing,
       returnKeyType: 'done',
       allowFontScaling: true,
+      maxLength: 20,
     };
     // because textAlign is apparently not an official property (...?)
     const textInputProps = {
@@ -131,7 +144,7 @@ export class Roundel extends React.PureComponent<RoundelProps, RoundelInfo> {
           </View>
           <View style={styles.bar} />
             {this.props.editable
-              ? <TextInput ref={ref => this.textInput = ref} onEndEditing={this.onEndEditing} {...textInputProps} />
+              ? <TextInput ref={ref => this.textInput = ref} onFocus={this.onBeginEditing} onEndEditing={this.onEndEditing} {...textInputProps} />
               : <Text style={styles.text}>{this.props.text}</Text>
             }
         </View>

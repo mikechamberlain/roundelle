@@ -1,18 +1,21 @@
 import React from 'react';
-import { View, Dimensions, StatusBar, StyleSheet, ScrollView, TouchableHighlight, Text } from 'react-native';
+import { View, Dimensions, StatusBar, StyleSheet, ScrollView } from 'react-native';
 import { Roundel, RoundelProps } from '../Roundel/Roundel';
 import { roundels, RoundelInfo, defaultStyles } from '../styles';
 import ActionSheet from 'react-native-actionsheet';
 import { exportImage, ExportAction } from './Export';
-import { NavigationScreenProps } from 'react-navigation';
+import { NavigationScreenProps, NavigationParams } from 'react-navigation';
 import { Ionicons } from '@expo/vector-icons';
 
 const DEFAULT_TEXT_SIZE = 1;
 const MAX_TEXT_LENGTH = 10;
-const TEXT_SCALING_FACTOR = 0.94 // for every character over the max, we reduce the text size by this factor to try to fit it inside the bar
+// for every character over the max, we reduce the text size by this factor to try to fit it inside the bar
+const TEXT_SCALING_FACTOR = 0.945;
 const THEME_ITEM_SCALING_FACTOR = 0.23;
 const ROUNDEL_ASPECT_RATIO = 0.9
 const EXPORT_WIDTH = 1080;
+// we need to wait this long for the iOS keyboard to fully scroll off-screen before showing the actionsheet, else it will automatically refocus the TextInput
+const STUPID_IOS_KEYBOARD_DISMISS_DELAY = 1000; 
 
 interface HomeState {
   roundel: RoundelInfo;
@@ -43,32 +46,29 @@ export class Home extends React.PureComponent<NavigationScreenProps, HomeState> 
 
   componentDidMount() {
     this.props.navigation.setParams({
-      _this: this,
+      setState: this.setState.bind(this),
+      showExportActionSheet: () => this.exportActionSheet.show(),
     });
   }
 
-  static navigationOptions = () => ({
+  static navigationOptions = (params: NavigationParams) => ({
     title: 'Roundel',
-    // headerRight: (
-    //   <Ionicons
-    //     style={styles.shareButton}
-    //     name="ios-share-outline" 
-    //     size={30} 
-    //     color="white" 
-    //     onPress={() => {
-    //       const _this: any = props.navigation.getParam('_this');
-    //       _this.setState((prev: HomeState) => ({
-    //           editing: false,
-    //           roundel: {
-    //             ...prev.roundel,
-    //             textSize: _this.calcTextSize(prev.roundel.text),
-    //           }
-    //       }));
-    //       _this.exportActionSheet.show();
-    //     }}
-    //   />
-    // )
+    headerRight: (
+      <Ionicons
+        style={styles.shareButton}
+        name="ios-share-outline" 
+        size={32} 
+        color="white" 
+        onPress={() => {
+          params.navigation.getParam('setState')(
+            () => ({editing: false}),
+            () => setTimeout(() => params.navigation.getParam('showExportActionSheet')(), STUPID_IOS_KEYBOARD_DISMISS_DELAY)
+          );
+        }}
+      />
+    ),
   });
+
 
   private onRoundelPress = (roundel: RoundelInfo) => {
     this.setState(prev => ({
@@ -81,23 +81,32 @@ export class Home extends React.PureComponent<NavigationScreenProps, HomeState> 
   }
 
   private calcTextSize = (text: string): number => {
-    return Math.min(
-      DEFAULT_TEXT_SIZE, 
-      DEFAULT_TEXT_SIZE * Math.pow(TEXT_SCALING_FACTOR, (text.length - MAX_TEXT_LENGTH)));
-    }
+  return Math.min(
+    DEFAULT_TEXT_SIZE, 
+    DEFAULT_TEXT_SIZE * Math.pow(TEXT_SCALING_FACTOR, (text.length - MAX_TEXT_LENGTH)));
+  }
 
-  private onChangeText = (text: string) => {
+  private onBeginEditing = () => {
+    console.log('begin home');
+    this.setState(() => ({ editing: true }));
+  }
+
+  private onEndEditing = (text?: string) => {
+    console.log('end home');
     this.setState(prev => ({
       roundel: {
         ...prev.roundel,
-        textSize: this.calcTextSize(text),
+        textSize: this.calcTextSize(text || prev.text),
       },
-      text: text,
+      text: text || prev.text,
+      editing: false,
     }));
   }
 
-  private doExport = (action: ExportAction) => {
-     exportImage(action, this.editorView, EXPORT_WIDTH, EXPORT_WIDTH * 1 / ROUNDEL_ASPECT_RATIO);
+  private handleActionSheet = (action: ExportAction) => {
+    console.log('handle');
+    this.onEndEditing();
+    exportImage(action, this.editorView, EXPORT_WIDTH, EXPORT_WIDTH * 1 / ROUNDEL_ASPECT_RATIO);
   }
 
   render() {
@@ -108,7 +117,8 @@ export class Home extends React.PureComponent<NavigationScreenProps, HomeState> 
       width: this.editorSize,
       height: this.editorSize * ROUNDEL_ASPECT_RATIO,
       textSize: this.state.roundel.textSize,
-      onChangeText: this.onChangeText,
+      onBeginEditing: this.onBeginEditing,
+      onEndEditing: this.onEndEditing,
       onPress: undefined,
       text: this.state.text,
     };
@@ -135,29 +145,11 @@ export class Home extends React.PureComponent<NavigationScreenProps, HomeState> 
             {themeProps.map((p, i) => <Roundel key={i} {...p} />)}
           </View>
         </ScrollView>
-        <View style={styles.exportButtonContainer}>
-          <TouchableHighlight
-            style={styles.exportButton}
-            onPress={() => this.exportActionSheet.show()}
-            activeOpacity={defaultStyles.touchableHighlight.activeOpacity}
-            underlayColor={defaultStyles.touchableHighlight.underlayColor}
-          >
-          <View style={styles.exportButton}>
-            <Ionicons
-              style={styles.shareButton}
-              name="ios-share-outline" 
-              size={30} 
-              color="white" 
-            />
-            <Text style={styles.exportButtonText}>EXPORT</Text>
-            </View>
-          </TouchableHighlight>
-        </View>
         <ActionSheet
           ref={(ref:any) => this.exportActionSheet = ref}
           options={['Save to photos', 'Share', 'Cancel']}
           cancelButtonIndex={2}
-          onPress={this.doExport}
+          onPress={this.handleActionSheet}
         />
       </View>
     );
@@ -192,21 +184,4 @@ const styles = StyleSheet.create({
   shareButton: {
     paddingRight: 10
   },
-  exportButtonContainer: {
-    height: 45,
-    width: '100%',
-  },
-  exportButton: {
-    backgroundColor: defaultStyles.brandColor,
-    height: '100%',
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  exportButtonText: {
-    fontFamily: defaultStyles.fontFamily,
-    color: 'white',
-    fontSize: 20,
-  }
 });
