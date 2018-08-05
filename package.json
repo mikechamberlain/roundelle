@@ -36,14 +36,14 @@
     "buildRunIOS": "yarn run build && yarn run watchAndRunIOS ",
     "watchAndStart": "concurrently \"yarn run watch\" \"yarn run start\"",
     "buildAndStart": "yarn run build && yarn run watchAndStart",
-    "cleanModules": "rm -rf $TMPDIR/metro-cache-* && rm -rf node_modules && yarn"
+    "cleanModules": "rm -rf $TMPDIR/metro-cache-* && rm -rf node_modules && yarn clean && yarn"
   },
   "jest": {
     "preset": "jest-expo"
   },
   "dependencies": {
     "@types/expo": "^27.0.6",
-    "@types/expo__vector-icons": "^6.2.2",
+    "@types/expo__vector-icons": "^6.2.3",
     "@types/react-navigation": "^2.0.10",
     "exp-cli": "^5.0.0",
     "expo": "^28.0.0",

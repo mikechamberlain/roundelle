@@ -3,6 +3,21 @@
     "sdkVersion": "28.0.0",
     "orientation": "portrait",
     "name": "Roundel",
-    "slug": "roundel"
+    "slug": "roundel",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "cover"
+    },
+    "assetBundlePatterns": [
+      "assets/*"
+    ],
+    "ios": {
+      "bundleIdentifier": "net.mikechamberlain.roundel"
+    },
+    "android": {
+      "package": "net.mikechamberlain.roundel"
+    },
+    "privacy": "public"
   }
 }
