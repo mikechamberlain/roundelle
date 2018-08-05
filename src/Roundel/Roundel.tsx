@@ -42,7 +42,6 @@ export class Roundel extends React.PureComponent<RoundelProps, RoundelState> {
   }
 
   private onBeginEditing = () => {
-    console.log('begin');
     this.setState(() => ({editing: true}));
     if (this.props.onBeginEditing) {
       this.props.onBeginEditing();
@@ -50,7 +49,6 @@ export class Roundel extends React.PureComponent<RoundelProps, RoundelState> {
   }
 
   private onEndEditing = (e: NativeSyntheticEvent<TextInputEndEditingEventData>) => {
-    console.log('end');
     this.setState(() => ({editing: false}));
     if (this.props.onEndEditing) {
       this.props.onEndEditing(e.nativeEvent.text);
@@ -58,7 +56,6 @@ export class Roundel extends React.PureComponent<RoundelProps, RoundelState> {
   }
 
   onPress = () => {
-    console.log('prts')
     if (this.props.onPress) {
       this.props.onPress(this.state);
     }
@@ -103,6 +100,7 @@ export class Roundel extends React.PureComponent<RoundelProps, RoundelState> {
         width: '95%',
         fontFamily: defaultStyles.fontFamily,
         height: this.props.width * BAR_SCALING_FACTOR,
+        top: '41%'
       },
       text: {
         position: 'absolute',
@@ -114,7 +112,7 @@ export class Roundel extends React.PureComponent<RoundelProps, RoundelState> {
       }
     });
 
-    const props: TextInputProperties = {
+    const textInputProps: TextInputProperties = {
       value: this.props.text,
       editable: this.props.editable,
       style: styles.textInput,
@@ -127,8 +125,8 @@ export class Roundel extends React.PureComponent<RoundelProps, RoundelState> {
       maxLength: 20,
     };
     // because textAlign is apparently not an official property (...?)
-    const textInputProps = {
-      ...props,
+    const textInputPropsExt = {
+      ...textInputProps,
       textAlign: 'center',
     };
     
@@ -144,7 +142,7 @@ export class Roundel extends React.PureComponent<RoundelProps, RoundelState> {
           </View>
           <View style={styles.bar} />
             {this.props.editable
-              ? <TextInput ref={ref => this.textInput = ref} onFocus={this.onBeginEditing} onEndEditing={this.onEndEditing} {...textInputProps} />
+              ? <TextInput ref={ref => this.textInput = ref} onFocus={this.onBeginEditing} onEndEditing={this.onEndEditing} {...textInputPropsExt} />
               : <Text style={styles.text}>{this.props.text}</Text>
             }
         </View>

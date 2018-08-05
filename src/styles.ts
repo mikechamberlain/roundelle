@@ -1,5 +1,5 @@
 export const defaultStyles = {
-    fontFamily: 'Arial',
+    fontFamily: 'johnston',
     brandColor: '#0019a8',
     touchableHighlight: {
         activeOpacity: 0.2, 

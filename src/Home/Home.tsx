@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Dimensions, StatusBar, StyleSheet, ScrollView } from 'react-native';
+import { View, Dimensions, StatusBar, StyleSheet, ScrollView, Keyboard, EmitterSubscription } from 'react-native';
 import { Roundel, RoundelProps } from '../Roundel/Roundel';
 import { roundels, RoundelInfo, defaultStyles } from '../styles';
 import ActionSheet from 'react-native-actionsheet';
@@ -14,8 +14,6 @@ const TEXT_SCALING_FACTOR = 0.945;
 const THEME_ITEM_SCALING_FACTOR = 0.23;
 const ROUNDEL_ASPECT_RATIO = 0.9
 const EXPORT_WIDTH = 1080;
-// we need to wait this long for the iOS keyboard to fully scroll off-screen before showing the actionsheet, else it will automatically refocus the TextInput
-const STUPID_IOS_KEYBOARD_DISMISS_DELAY = 1000; 
 
 interface HomeState {
   roundel: RoundelInfo;
@@ -24,6 +22,10 @@ interface HomeState {
 }
 
 export class Home extends React.PureComponent<NavigationScreenProps, HomeState> {
+
+  static isKeyboardShowing = true;
+  static keyboardWillShowListener: EmitterSubscription;
+  static keyboardDidHideListener: EmitterSubscription;
 
   screenWidth = Dimensions.get('screen').width
   editorSize = this.screenWidth;
@@ -49,10 +51,21 @@ export class Home extends React.PureComponent<NavigationScreenProps, HomeState> 
       setState: this.setState.bind(this),
       showExportActionSheet: () => this.exportActionSheet.show(),
     });
+    Home.keyboardWillShowListener = Keyboard.addListener('keyboardWillShow', () => Home.isKeyboardShowing = true);
+    Home.keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => Home.isKeyboardShowing = false);
+  }
+
+  componentWillUnmount() {
+    Home.keyboardWillShowListener.remove();
+    Home.keyboardDidHideListener.remove();
   }
 
   static navigationOptions = (params: NavigationParams) => ({
     title: 'Roundel',
+    headerTitleStyle: {
+      fontFamily: defaultStyles.fontFamily,
+      fontSize: 23,
+    },
     headerRight: (
       <Ionicons
         style={styles.shareButton}
@@ -62,7 +75,20 @@ export class Home extends React.PureComponent<NavigationScreenProps, HomeState> 
         onPress={() => {
           params.navigation.getParam('setState')(
             () => ({editing: false}),
-            () => setTimeout(() => params.navigation.getParam('showExportActionSheet')(), STUPID_IOS_KEYBOARD_DISMISS_DELAY)
+            () => {
+              const showActionSheet = params.navigation.getParam('showExportActionSheet');
+              // We have to wait for the keyboard to hide before showing the action sheet, else:
+              // 1) it will automatically refocus when the action sheet dismisses, which is surprising to the user, and
+              // 2) we may end up with the cursor shown on the exported image
+              if (Home.isKeyboardShowing) {
+                const listener = Keyboard.addListener('keyboardDidHide', () => {
+                  showActionSheet();
+                  listener.remove();
+                });
+              } else {
+                showActionSheet();
+              }
+            }
           );
         }}
       />
@@ -81,18 +107,16 @@ export class Home extends React.PureComponent<NavigationScreenProps, HomeState> 
   }
 
   private calcTextSize = (text: string): number => {
-  return Math.min(
-    DEFAULT_TEXT_SIZE, 
-    DEFAULT_TEXT_SIZE * Math.pow(TEXT_SCALING_FACTOR, (text.length - MAX_TEXT_LENGTH)));
+    return Math.min(
+      DEFAULT_TEXT_SIZE, 
+      DEFAULT_TEXT_SIZE * Math.pow(TEXT_SCALING_FACTOR, (text.length - MAX_TEXT_LENGTH)));
   }
 
   private onBeginEditing = () => {
-    console.log('begin home');
     this.setState(() => ({ editing: true }));
   }
 
   private onEndEditing = (text?: string) => {
-    console.log('end home');
     this.setState(prev => ({
       roundel: {
         ...prev.roundel,
