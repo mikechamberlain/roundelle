@@ -61,7 +61,7 @@ export class Home extends React.PureComponent<NavigationScreenProps, HomeState> 
   }
 
   static navigationOptions = (params: NavigationParams) => ({
-    title: 'Roundel',
+    title: 'Roundelle',
     headerTitleStyle: {
       fontFamily: defaultStyles.fontFamily,
       fontSize: 23,
