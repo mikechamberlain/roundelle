@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, TextInput, TextInputProperties, TouchableHighlight, NativeSyntheticEvent, TextInputEndEditingEventData, Text } from 'react-native';
+import { View, StyleSheet, TextInput, TouchableHighlight, NativeSyntheticEvent, TextInputEndEditingEventData, Text } from 'react-native';
 import { defaultStyles, RoundelInfo } from '../styles';
 
 const RING_SCALING_FACTOR = 0.82;
@@ -112,7 +112,7 @@ export class Roundel extends React.PureComponent<RoundelProps, RoundelState> {
       }
     });
 
-    const textInputProps: TextInputProperties = {
+    const textInputProps: any = {
       value: this.props.text,
       editable: this.props.editable,
       style: styles.textInput,
