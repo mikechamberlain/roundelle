@@ -14,7 +14,8 @@
       "assets/*"
     ],
     "ios": {
-      "bundleIdentifier": "net.mikechamberlain.roundel"
+      "bundleIdentifier": "net.mikechamberlain.roundel",
+      "supportsTablet": true
     },
     "android": {
       "package": "net.mikechamberlain.roundel"
