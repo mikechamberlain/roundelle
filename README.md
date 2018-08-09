@@ -2,7 +2,7 @@
 
 React native app to produce beautiful, customized Tfl roundels.
 
-![Screenshot](./img-src/screenshots/2_5.5 inch - iPhone 7 Plus_screen__2.jpg)
+![Screenshot](https://github.com/mikechamberlain/roundelle/blob/master/image-src/screenshots/2_5.5%20inch%20-%20iPhone%207%20Plus_screen__2.jpg?raw=true)
 
 ### Commands
 
