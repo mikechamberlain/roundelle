@@ -1,6 +1,8 @@
+# Roundelle
+
 A react-native app for creating beautiful and authentic London Underground roundels.
 
-## Common commands
+### Common commands
 
 ```bash
 yarn                 # install dependencies
